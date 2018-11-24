@@ -22,7 +22,7 @@ var (
 	// TODO: modifiedFlag = flag.Bool("modified", false, "read archive of modified files from standard input")
 	// TODO: actually do something with scope
 	scopeFlag = flag.String("scope", "", "comma-separated list of `packages` the analysis should be limited to")
-	//jsonFlag  = flag.Bool("json", false, "emit output in JSON format")
+	writeFlag = flag.Bool("write", false, "write directly to files in place (instead of stdout)")
 )
 
 const useHelp = "Run 'regopher -help' for more information.\n"
@@ -40,10 +40,8 @@ of the syntax element to query.  For example:
 	foo.go:#123,#128
 	bar.go:#123
 
-TODO: The -json flag causes regopher to emit output in JSON format;
-	golang.org/x/tools/cmd/regopher/serial defines its schema.
-	Otherwise, the output is in an editor-friendly format in which
-	every line has the form "pos: text", where pos is "-" if unknown.
+The -write flag causes regopher write back to files in-place; This will be incompatible with -modified
+	NOTE: -write might become the default behaviour (except for -modified)
 
 TODO: The -modified flag causes regopher to read an archive from standard input.
 	Files in this archive will be used in preference to those in
@@ -63,7 +61,7 @@ TODO: The -scope flag restricts analysis to the specified packages.
 
 Example: introduce-parameter-object at offset 530 in this file (an import spec):
 
-  $ regopher introduce-parameter-object src/golang.org/x/tools/cmd/regopher/main.go:#530
+  $ regopher introduce-parameter-object main.go:#530
 `
 
 /*
@@ -206,6 +204,7 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 }
 
 func run(mode string, q *query) error {
+	updated := map[string]*dst.File{}
 	switch mode {
 	case introduceParameterObject:
 		p, err := parseInputPositionString(q.Pos)
@@ -221,12 +220,40 @@ func run(mode string, q *query) error {
 		if err != nil {
 			return err
 		}
-		updated, err := extractParameterObject(p, files, funcDecl)
+		updated, err = extractParameterObject(p, files, funcDecl)
 		if err != nil {
 			return err
 		}
 
-		// TODO writing files themselves instead of stdout
+	case "no-op":
+		p, err := parseInputPositionString(q.Pos)
+		if err != nil {
+			return err
+		}
+		_, updated, err = loadFiles(p)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid subcommand '%s'", mode)
+	}
+
+	if *writeFlag {
+		for name, f := range updated {
+			w, err := os.OpenFile(name, os.O_RDWR|os.O_TRUNC, 0666)
+			if err != nil {
+				return err
+			}
+
+			if err := decorator.Fprint(w, f); err != nil {
+				return err
+			}
+			err = w.Close()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
 		for name, f := range updated {
 			// filename
 			// length (excluding trailing newline)
@@ -240,21 +267,6 @@ func run(mode string, q *query) error {
 			fmt.Fprintf(os.Stdout, "%d\n", w.Len())
 			fmt.Fprintln(os.Stdout, w.String())
 		}
-
-	case "no-op":
-		p, err := parseInputPositionString(q.Pos)
-		if err != nil {
-			return err
-		}
-		_, files, err := loadFiles(p)
-		if err != nil {
-			return err
-		}
-		if err := decorator.Fprint(os.Stdout, files[p.file]); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("invalid subcommand '%s'", mode)
 	}
 	return nil
 }
