@@ -15,20 +15,27 @@ Regopher is an attempt to bring better refactoring tools to go.
 
 ### Refactors
 
- * Extract function
- * Introduce parameter object
- * Introduce result object
- * Extract variable
- * Extract constant
- * Move to another file
+Refactor                     | Status  | Use guru? | Notes
+-----------------------------|---------|-----------|-------------------
+ Introduce parameter object  | started | referrers | Probably don't need guru for package-private funcs
+ Introduce result object     |         | referrers | as above
+ Extract variable            |
+ Extract constant            |
+ Move to a new file          |         |           | 
+ Hide                        |         | n/a       | could use referrers to validate that it's unused. Is this just `gorename`?
+ Extract function            |         | freevars  | This is already implemented by godoctor
 
 #### As wrapper of existing tools
- * Hide method/variable (it's really a subset of rename) 
  * Expose method/variable (as above)
  * Move to another package (maybe possible to wrap rename)
 
 ### Fixes
- * Match signature to return values under cursor
+
+Fixes suggest that the code is not currently valid. Not sure criteria yet for generating an AST for slightly-broken code.
+
+Fix                                           | Feasibility |
+----------------------------------------------|-------------|
+Match signature to return values under cursor | ?
 
 
 ## Out of scope
