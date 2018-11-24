@@ -176,31 +176,32 @@ func main() {
 	}
 }
 
-func loadFiles(p inputPos) (*decorator.Decorator, *dst.File, []*dst.File, error) {
+func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 	fset := token.NewFileSet()
-	otherFiles := []*dst.File{}
+	files := map[string]*dst.File{}
 	d := decorator.New(fset)
 	af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
 	if err != nil && af == nil {
-		return d, nil, otherFiles, err
+		return d, files, err
 	}
 	f := d.DecorateFile(af)
+	files[p.file] = f
 	dir := filepath.Dir(p.file)
 	matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
 	if err != nil {
-		return d, f, otherFiles, err
+		return d, files, err
 	}
 	for _, match := range matches {
 		if match != p.file {
-			af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
+			af, err := parser.ParseFile(fset, match, nil, parser.AllErrors|parser.ParseComments)
 			if err != nil && af == nil {
-				return d, f, otherFiles, err
+				return d, files, err
 			}
 			f := d.DecorateFile(af)
-			otherFiles = append(otherFiles, f)
+			files[match] = f
 		}
 	}
-	return d, f, otherFiles, nil
+	return d, files, nil
 }
 
 func run(mode string, q *query) error {
@@ -210,22 +211,29 @@ func run(mode string, q *query) error {
 		if err != nil {
 			return err
 		}
-		d, f, otherFiles, err := loadFiles(p)
+		d, files, err := loadFiles(p)
 		if err != nil {
 			return err
 		}
 
-		funcDecl, err := getFuncAt(d, f, p.pos)
+		funcDecl, err := getFuncAt(d, files[p.file], p.pos)
 		if err != nil {
 			return err
 		}
-		err = extractParameterObject(f, otherFiles, funcDecl)
+		updated, err := extractParameterObject(p, files, funcDecl)
 		if err != nil {
 			return err
 		}
 
-		if err := decorator.Fprint(os.Stdout, f); err != nil {
-			return err
+		// TODO proper file delineation, and writing files themselves
+		for _, f := range updated {
+			fmt.Fprintln(os.Stdout, "----file----")
+			fmt.Fprintln(os.Stdout, f.Name.Name)
+			fmt.Fprintln(os.Stdout, "----data----")
+			// TODO all files
+			if err := decorator.Fprint(os.Stdout, f); err != nil {
+				return err
+			}
 		}
 
 	case "no-op":
@@ -233,11 +241,11 @@ func run(mode string, q *query) error {
 		if err != nil {
 			return err
 		}
-		_, f, _, err := loadFiles(p)
+		_, files, err := loadFiles(p)
 		if err != nil {
 			return err
 		}
-		if err := decorator.Fprint(os.Stdout, f); err != nil {
+		if err := decorator.Fprint(os.Stdout, files[p.file]); err != nil {
 			return err
 		}
 	default:

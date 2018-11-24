@@ -30,7 +30,8 @@ func TestExtractParameterObject(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.filename, func(t *testing.T) {
 			fset := token.NewFileSet()
-			f, err := decorator.ParseFile(fset, "testdata/before/"+testCase.filename, nil, parser.AllErrors|parser.ParseComments)
+			file := "testdata/before/" + testCase.filename
+			f, err := decorator.ParseFile(fset, file, nil, parser.AllErrors|parser.ParseComments)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -38,7 +39,8 @@ func TestExtractParameterObject(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = extractParameterObject(f, []*dst.File{}, funcDecl)
+			p := inputPos{file: file}
+			_, err = extractParameterObject(p, map[string]*dst.File{p.file: f}, funcDecl)
 			if err != nil {
 				t.Fatal(err)
 			}

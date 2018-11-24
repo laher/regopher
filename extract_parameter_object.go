@@ -8,10 +8,11 @@ import (
 
 const introduceParameterObject = "introduce-parameter-object"
 
-func extractParameterObject(f *dst.File, otherFiles []*dst.File, fn *dst.FuncDecl) error {
+func extractParameterObject(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
 	paramName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)
+	f := files[p.file]
 
 	fn.Type.Params.List = []*dst.Field{
 		structAsField(varName, paramName),
@@ -35,5 +36,6 @@ func extractParameterObject(f *dst.File, otherFiles []*dst.File, fn *dst.FuncDec
 	decl := newStruct(paramName, params)
 	f.Decls = append(f.Decls, decl)
 
-	return nil
+	// TODO other files
+	return map[string]*dst.File{p.file: f}, nil
 }
