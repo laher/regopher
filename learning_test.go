@@ -29,21 +29,42 @@ type x struct {
 	}
 
 	params := &dst.FieldList{}
+
+	/*
+		typ := &dst.StructType{}
+		decl := &dst.GenDecl{
+			Tok: token.TYPE,
+			Specs: []dst.Spec{
+				&dst.TypeSpec{
+					Name: &dst.Ident{Name: name},
+					Type: typ,
+				},
+			},
+			Decs: dst.GenDeclDecorations{
+				NodeDecs: dst.NodeDecs{},
+			},
+		} */
 	for _, d := range f.Decls {
 		//	fmt.Printf("%T: %+v\n", d, d)
 		switch x := d.(type) {
 		case *dst.FuncDecl:
 			fmt.Printf("FUNCDECL - %+v\n", x)
 			params = dst.Clone(x.Type.Params).(*dst.FieldList)
+			//			params2 := dst.Clone(x.Type.Params).(*dst.FieldList)
 			for _, p := range params.List {
 				fmt.Printf("PARAM - %+v\n", p)
 			}
+			//typ.Fields = params
 			x.Type.Params.List = []*dst.Field{
 				&dst.Field{
 					Names: []*dst.Ident{
-						&dst.Ident{Name: name},
+						&dst.Ident{Name: "param"},
 					},
-					Type: &dst.StructType{},
+					Type: &dst.Ident{Name: name},
+					/*
+						Type: [] &dst.StructType{
+							Fields: params2,
+						},*/
 				},
 				// &{Names:[y] Type:<nil> Values:[0xc0000ba140] Decs:{NodeDecs:{Space:None Start:[] End:[]
 				//After:None} Assign:[]}}
@@ -101,9 +122,9 @@ type x struct {
 			}
 		}
 	}
-	if len(os.Args) > 1 && os.Args[1] == "p" {
-		if err := decorator.Print(f); err != nil {
-			panic(err)
-		}
+	//if len(os.Args) > 1 && os.Args[1] == "p" {
+	if err := decorator.Print(f); err != nil {
+		panic(err)
 	}
+	//}
 }
