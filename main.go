@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"go/build"
@@ -225,15 +226,19 @@ func run(mode string, q *query) error {
 			return err
 		}
 
-		// TODO proper file delineation, and writing files themselves
-		for _, f := range updated {
-			fmt.Fprintln(os.Stdout, "----file----")
-			fmt.Fprintln(os.Stdout, f.Name.Name)
-			fmt.Fprintln(os.Stdout, "----data----")
-			// TODO all files
-			if err := decorator.Fprint(os.Stdout, f); err != nil {
+		// TODO writing files themselves instead of stdout
+		for name, f := range updated {
+			// filename
+			// length (excluding trailing newline)
+			// contents
+			// newline
+			w := &bytes.Buffer{}
+			fmt.Fprintln(os.Stdout, name)
+			if err := decorator.Fprint(w, f); err != nil {
 				return err
 			}
+			fmt.Fprintf(os.Stdout, "%d\n", w.Len())
+			fmt.Fprintln(os.Stdout, w.String())
 		}
 
 	case "no-op":
