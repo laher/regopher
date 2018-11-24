@@ -176,36 +176,48 @@ func main() {
 	}
 }
 
+func loadFiles(p inputPos) (*decorator.Decorator, *dst.File, []*dst.File, error) {
+	fset := token.NewFileSet()
+	otherFiles := []*dst.File{}
+	d := decorator.New(fset)
+	af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
+	if err != nil && af == nil {
+		return d, nil, otherFiles, err
+	}
+	f := d.DecorateFile(af)
+	dir := filepath.Dir(p.file)
+	matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
+	if err != nil {
+		return d, f, otherFiles, err
+	}
+	for _, match := range matches {
+		if match != p.file {
+			af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
+			if err != nil && af == nil {
+				return d, f, otherFiles, err
+			}
+			f := d.DecorateFile(af)
+			otherFiles = append(otherFiles, f)
+		}
+	}
+	return d, f, otherFiles, nil
+}
+
 func run(mode string, q *query) error {
 	switch mode {
 	case introduceParameterObject:
-		fset := token.NewFileSet()
 		p, err := parseInputPositionString(q.Pos)
-		d := decorator.New(fset)
-		af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
-		if err != nil && af == nil {
+		if err != nil {
 			return err
 		}
-		f := d.DecorateFile(af)
+		d, f, otherFiles, err := loadFiles(p)
+		if err != nil {
+			return err
+		}
+
 		funcDecl, err := getFuncAt(d, f, p.pos)
 		if err != nil {
 			return err
-		}
-		dir := filepath.Dir(p.file)
-		matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
-		if err != nil {
-			return err
-		}
-		otherFiles := []*dst.File{}
-		for _, match := range matches {
-			if match != p.file {
-				af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
-				if err != nil && af == nil {
-					return err
-				}
-				f := d.DecorateFile(af)
-				otherFiles = append(otherFiles, f)
-			}
 		}
 		err = extractParameterObject(f, otherFiles, funcDecl)
 		if err != nil {
@@ -217,14 +229,14 @@ func run(mode string, q *query) error {
 		}
 
 	case "no-op":
-		fset := token.NewFileSet()
 		p, err := parseInputPositionString(q.Pos)
-		d := decorator.New(fset)
-		af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
-		if err != nil && af == nil {
+		if err != nil {
 			return err
 		}
-		f := d.DecorateFile(af)
+		_, f, _, err := loadFiles(p)
+		if err != nil {
+			return err
+		}
 		if err := decorator.Fprint(os.Stdout, f); err != nil {
 			return err
 		}
