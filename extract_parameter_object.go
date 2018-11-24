@@ -11,23 +11,14 @@ const introduceParameterObject = "introduce-parameter-object"
 
 func getIdentifierAt(d *decorator.Decorator, f *dst.File, pos int) (*dst.Ident, error) {
 	var r *dst.Ident
-	var err error
 	dst.Inspect(f, func(n dst.Node) bool {
 		if n == nil {
 			return false
 		}
-		switch n.(type) {
-		case *dst.FuncType: //ignore.
-			// TODO: Why FuncType, specifically?
-			// Ignore any others?
-			return true
-		}
-
 		an, ok := d.Ast.Nodes[n]
 		if !ok {
-			// TODO: ignore like FuncType?
-			err = fmt.Errorf("No ast node matching dst for %T: %+v", n, n)
-			return false
+			// ignores things like FuncType
+			return true
 		}
 		p := an.Pos()
 		e := an.End()
@@ -41,9 +32,6 @@ func getIdentifierAt(d *decorator.Decorator, f *dst.File, pos int) (*dst.Ident, 
 		}
 		return false
 	})
-	if err != nil {
-		return nil, err
-	}
 	if r == nil {
 		return nil, fmt.Errorf("ident not found")
 	}
