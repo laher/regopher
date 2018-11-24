@@ -35,7 +35,41 @@ func extractParameterObject(p inputPos, files map[string]*dst.File, fn *dst.Func
 	})
 	decl := newStruct(paramName, params)
 	f.Decls = append(f.Decls, decl)
-
-	// TODO other files
-	return map[string]*dst.File{p.file: f}, nil
+	updated := map[string]*dst.File{p.file: f}
+	for filename, f := range files {
+		dst.Inspect(f, func(n dst.Node) bool {
+			switch c := n.(type) {
+			case *dst.CallExpr:
+				switch ce := c.Fun.(type) {
+				case *dst.Ident:
+					// refactor params
+					if ce.Name == fn.Name.Name {
+						// TODO: keyify?
+						args := c.Args
+						c.Args = []dst.Expr{
+							&dst.CompositeLit{
+								Type: &dst.Ident{
+									Name: paramName,
+								},
+								Elts: args,
+							},
+						}
+						updated[filename] = f
+					}
+				case *dst.SelectorExpr:
+					// TODO: selector-based references (perhaps only needed for references
+					if ce.Sel.Name == fn.Name.Name {
+						// TODO
+						fmt.Println("TODO: selector calls not implemented *yet*")
+					}
+				default:
+					// TODO any other types of reference?
+					//fmt.Printf("[%s] call to func: %T - %+v\n", filename, ce, ce)
+				}
+			}
+			return true
+		})
+	}
+	// TODO other packages
+	return updated, nil
 }

@@ -94,7 +94,11 @@ func parseInputPositionString(str string) (inputPos, error) {
 	if len(parts) != 2 {
 		return inputPos{}, fmt.Errorf("There should be exactly one : symbol")
 	}
-	p := inputPos{file: parts[0]}
+	file := parts[0]
+	if file != "" {
+		file = filepath.Clean(file)
+	}
+	p := inputPos{file: file}
 	posParts := strings.Split(parts[1], ",")
 	var err error
 	p.pos, err = parseLineNum(posParts[0])
@@ -184,7 +188,7 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 		return d, files, err
 	}
 	f := d.DecorateFile(af)
-	files[p.file] = f
+	files[filepath.Clean(p.file)] = f
 	dir := filepath.Dir(p.file)
 	matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
 	if err != nil {
@@ -197,7 +201,7 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 				return d, files, err
 			}
 			f := d.DecorateFile(af)
-			files[match] = f
+			files[filepath.Clean(match)] = f
 		}
 	}
 	return d, files, nil
@@ -216,7 +220,7 @@ func run(mode string, q *query) error {
 			return err
 		}
 
-		funcDecl, err := getFuncAt(d, files[p.file], p.pos)
+		funcDecl, err := getFuncAt(d, files[filepath.Clean(p.file)], p.pos)
 		if err != nil {
 			return err
 		}

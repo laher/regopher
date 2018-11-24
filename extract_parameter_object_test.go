@@ -25,6 +25,10 @@ func TestExtractParameterObject(t *testing.T) {
 			filename: "parameter_obj_used.go",
 			function: "extractParamUsed",
 		},
+		{
+			filename: "parameter_obj_referenced.go",
+			function: "extractParamReferenced",
+		},
 	}
 
 	for _, testCase := range testCases {
