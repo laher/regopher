@@ -197,6 +197,19 @@ func run(mode string, q *query) error {
 		if err := decorator.Fprint(os.Stdout, f); err != nil {
 			return err
 		}
+
+	case "no-op":
+		fset := token.NewFileSet()
+		p, err := parseInputPositionString(q.Pos)
+		d := decorator.New(fset)
+		af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors)
+		if err != nil && af == nil {
+			return err
+		}
+		f := d.DecorateFile(af)
+		if err := decorator.Fprint(os.Stdout, f); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("invalid subcommand '%s'", mode)
 	}
