@@ -180,7 +180,7 @@ func run(mode string, q *query) error {
 		fset := token.NewFileSet()
 		p, err := parseInputPositionString(q.Pos)
 		d := decorator.New(fset)
-		af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors)
+		af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
 		if err != nil && af == nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func run(mode string, q *query) error {
 		fset := token.NewFileSet()
 		p, err := parseInputPositionString(q.Pos)
 		d := decorator.New(fset)
-		af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors)
+		af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
 		if err != nil && af == nil {
 			return err
 		}
