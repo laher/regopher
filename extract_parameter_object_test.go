@@ -8,16 +8,23 @@ import (
 	"testing"
 
 	"github.com/dave/dst/decorator"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestExtractParameterObject(t *testing.T) {
 	testCases := []struct {
 		filename string
 		function string
-	}{{
-		filename: "parameter_obj_basic.go",
-		function: "basicUnusedParamUnreferenced",
-	}}
+	}{
+		{
+			filename: "parameter_obj_basic.go",
+			function: "extractParamUnused",
+		},
+		{
+			filename: "parameter_obj_used.go",
+			function: "extractParamUsed",
+		},
+	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.filename, func(t *testing.T) {
@@ -40,8 +47,11 @@ func TestExtractParameterObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			if string(expected) != actual {
-				t.Errorf("Actual: <||%s||>", actual)
-				t.Errorf("Expected: <||%s||>", string(expected))
+				dmp := diffmatchpatch.New()
+
+				diffs := dmp.DiffMain(string(expected), actual, false)
+
+				t.Error(dmp.DiffPrettyText(diffs))
 			}
 		})
 	}

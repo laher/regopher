@@ -2,10 +2,10 @@ package main
 
 import "fmt"
 
-func basicUnusedParamUnreferenced(param basicUnusedParamUnreferencedParam) {
+func extractParamUnused(param extractParamUnusedParam) {
 	fmt.Println("regopher")
 }
 
-type basicUnusedParamUnreferencedParam struct {
+type extractParamUnusedParam struct {
 	a, b, c string
 }

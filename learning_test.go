@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go/token"
 	"os"
 	"testing"
@@ -45,14 +44,14 @@ type x struct {
 			},
 		} */
 	for _, d := range f.Decls {
-		//	fmt.Printf("%T: %+v\n", d, d)
+		//	t.Logf("%T: %+v\n", d, d)
 		switch x := d.(type) {
 		case *dst.FuncDecl:
-			fmt.Printf("FUNCDECL - %+v\n", x)
+			t.Logf("FUNCDECL - %+v\n", x)
 			params = dst.Clone(x.Type.Params).(*dst.FieldList)
 			//			params2 := dst.Clone(x.Type.Params).(*dst.FieldList)
 			for _, p := range params.List {
-				fmt.Printf("PARAM - %+v\n", p)
+				t.Logf("PARAM - %+v\n", p)
 			}
 			//typ.Fields = params
 			x.Type.Params.List = []*dst.Field{
@@ -103,28 +102,28 @@ type x struct {
 	//		Token: "type",
 	if len(os.Args) > 1 && os.Args[1] == "r" {
 		for _, d := range f.Decls {
-			//fmt.Printf("decls: %T: %+v\n", d, d)
+			//t.Logf("decls: %T: %+v\n", d, d)
 			switch x := d.(type) {
 			case *dst.FuncDecl:
-				fmt.Printf("FUNCDECL - %+v\n", x)
+				t.Logf("FUNCDECL - %+v\n", x)
 
 			case *dst.GenDecl:
 				for _, s := range x.Specs {
 					switch ts := s.(type) {
 					case *dst.ValueSpec:
-						fmt.Printf("VALUE - spec values[%T] %+v\n", ts.Values[0], ts.Values[0])
+						t.Logf("VALUE - spec values[%T] %+v\n", ts.Values[0], ts.Values[0])
 					default:
-						fmt.Printf("GENDECL[%T] - spec [%T]: %+v\n", x.Tok, s, s)
+						t.Logf("GENDECL[%T] - spec [%T]: %+v\n", x.Tok, s, s)
 					}
 				}
 			default:
-				fmt.Printf("OTHER[%T]: %+v\n", d, d)
+				t.Logf("OTHER[%T]: %+v\n", d, d)
 			}
 		}
 	}
-	//if len(os.Args) > 1 && os.Args[1] == "p" {
-	if err := decorator.Print(f); err != nil {
-		panic(err)
+	if os.Getenv("VERBOSE") != "" {
+		if err := decorator.Print(f); err != nil {
+			panic(err)
+		}
 	}
-	//}
 }
