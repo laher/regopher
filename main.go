@@ -185,11 +185,12 @@ func run(mode string, q *query) error {
 			return err
 		}
 		f := d.DecorateFile(af)
-		ident, err := getIdentifierAt(d, f, p.pos)
+		funcDecl, err := getFuncAt(d, f, p.pos)
 		if err != nil {
 			return err
 		}
-		err = extractParameterObject(f, ident.Name)
+		// load other files here
+		err = extractParameterObject(f, funcDecl)
 		if err != nil {
 			return err
 		}

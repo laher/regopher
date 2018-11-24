@@ -33,7 +33,11 @@ func TestExtractParameterObject(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = extractParameterObject(f, testCase.function)
+			funcDecl, err := getFuncByName(f, testCase.function)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = extractParameterObject(f, funcDecl)
 			if err != nil {
 				t.Fatal(err)
 			}
