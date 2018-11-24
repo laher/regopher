@@ -1,15 +1,15 @@
 # regopher
 
-Refactoring tools for go [experimental].
+Regopher is an attempt to bring better refactoring tools to go.
 
 Nothing is ready to use. Just some experiments right now.
 
+Seemingly JetBrains have implemented much of this stuff for Goland, but it's closed source. Also it's probably written in Java, so probably not likely to be features for reuse by most go editors.
+
 ## Approach
 
-Regopher is an attempt to bring better refactoring tools to go.
-
- * Interprets `guru` results - `referrers`, `definition`, `freevars`
- * Uses `dst` (provisionally) to manipulate source
+ * `regopher` uses [dst](https://github.com/dave/dst) (provisionally) to read and manipulate source
+ * `regopher` uses [guru](https://godoc.org/golang.org/x/tools/cmd/guru) to infer semantic information from sources - subcommands such as `referrers`, `definition`, `freevars`
 
 ## Ideas
 
@@ -24,6 +24,9 @@ Refactor                     | Status  | Use guru? | Notes
  Move to a new file          |         |           | 
  Hide                        |         | n/a       | could use referrers to validate that it's unused. Is this just `gorename`?
  Extract function            |         | freevars  | This is already implemented by godoctor
+ Remove unnecessary else     |         |           | scan source / block
+ Remove unused parameters    |         | referrers | ''
+ Remove unused types/..      |         | referrers | ''
 
 #### As wrapper of existing tools
  * Expose method/variable (as above)
@@ -40,5 +43,13 @@ Match signature to return values under cursor | ?
 
 ## Out of scope
 
+Generally, there's no need to recreate things which already exists. 
+I'll avoid things which have already been adopted by vim-go, vscode, etc.
+
  * gorename
- * iferr
+ * go-iferr
+ * goimpl/impl
+ * struct tagging
+ * keyify
+
+extract-function is available via godoctor but seems not to be embraced by those at vim-go and vscode.
