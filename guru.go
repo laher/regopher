@@ -39,7 +39,7 @@ type guruPos struct {
 //	file                invalid position with file name
 //	-                   invalid position without file name
 //
-func parsePositionString(str string) (guruPos, error) {
+func parseGuruPos(str string) (guruPos, error) {
 	parts := strings.Split(str, ":")
 	var (
 		p   guruPos

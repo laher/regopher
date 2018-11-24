@@ -39,7 +39,7 @@ func TestParseGuruReferrers(t *testing.T) {
 	}
 	r := p.Refs[0]
 
-	pos, err := parsePositionString(r.Pos)
+	pos, err := parseGuruPos(r.Pos)
 	if err != nil {
 		t.Errorf("Parse guruPos error: %v", err)
 	}
