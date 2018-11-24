@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -37,7 +38,7 @@ func TestExtractParameterObject(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = extractParameterObject(f, funcDecl)
+			err = extractParameterObject(f, []*dst.File{}, funcDecl)
 			if err != nil {
 				t.Fatal(err)
 			}

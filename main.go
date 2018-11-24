@@ -8,9 +8,11 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
 )
 
@@ -189,8 +191,23 @@ func run(mode string, q *query) error {
 		if err != nil {
 			return err
 		}
-		// load other files here
-		err = extractParameterObject(f, funcDecl)
+		dir := filepath.Dir(p.file)
+		matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
+		if err != nil {
+			return err
+		}
+		otherFiles := []*dst.File{}
+		for _, match := range matches {
+			if match != p.file {
+				af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
+				if err != nil && af == nil {
+					return err
+				}
+				f := d.DecorateFile(af)
+				otherFiles = append(otherFiles, f)
+			}
+		}
+		err = extractParameterObject(f, otherFiles, funcDecl)
 		if err != nil {
 			return err
 		}

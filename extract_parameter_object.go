@@ -8,7 +8,7 @@ import (
 
 const introduceParameterObject = "introduce-parameter-object"
 
-func extractParameterObject(f *dst.File, fn *dst.FuncDecl) error {
+func extractParameterObject(f *dst.File, otherFiles []*dst.File, fn *dst.FuncDecl) error {
 	paramName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)
