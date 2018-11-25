@@ -18,7 +18,7 @@ Seemingly JetBrains have implemented much of this stuff for Goland, but it's clo
 Refactor                     | Status  | Use guru? | Notes
 -----------------------------|---------|-----------|-------------------
  Introduce parameter object  | started | referrers | don't need guru for package-private funcs
- Introduce result object     | started | referrers | as above
+ Introduce result object     | started | referrers | as above. NOTE: exclude last value if it's an error
  Extract variable            |
  Extract constant            |
  Move to a new file          |         |           | 
