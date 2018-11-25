@@ -14,6 +14,7 @@ import (
 
 func TestExtractParameterObject(t *testing.T) {
 	testCases := []struct {
+		pos      string
 		filename string
 		function string
 	}{
@@ -28,6 +29,10 @@ func TestExtractParameterObject(t *testing.T) {
 		{
 			filename: "parameter_obj_referenced.go",
 			function: "extractParamReferenced",
+		},
+		{
+			filename: "parameter_obj_method.go",
+			function: "extractParam",
 		},
 	}
 
