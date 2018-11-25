@@ -8,14 +8,27 @@ import (
 
 const cmdIntroduceResultObject = "introduce-result-object"
 
+// consolidate results into a struct
+// exclude the last value if it's an error
 func introduceResultObject(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
 	resultName := fn.Name.Name + "Result"
 	varName := "res"
 	results := dst.Clone(fn.Type.Results).(*dst.FieldList)
 	f := files[p.file]
-
+	var errResult *dst.Ident
+	if len(results.List) > 0 {
+		if ident, ok := results.List[len(results.List)-1].Type.(*dst.Ident); ok {
+			if ident.Name == "error" {
+				errResult = ident
+				results.List = results.List[:len(results.List)-1]
+			}
+		}
+	}
 	fn.Type.Results.List = []*dst.Field{
 		&dst.Field{Type: &dst.Ident{Name: resultName}},
+	}
+	if errResult != nil {
+		fn.Type.Results.List = append(fn.Type.Results.List, &dst.Field{Type: errResult})
 	}
 
 	renames := map[string]string{}
@@ -29,6 +42,11 @@ func introduceResultObject(p inputPos, files map[string]*dst.File, fn *dst.FuncD
 		switch i := n.(type) {
 		case *dst.ReturnStmt:
 			results := i.Results
+			var errResultVal dst.Expr
+			if errResult != nil {
+				errResultVal = results[len(results)-1]
+				results = results[:len(results)-1]
+			}
 			i.Results = []dst.Expr{
 				// result
 				&dst.CompositeLit{
@@ -37,6 +55,9 @@ func introduceResultObject(p inputPos, files map[string]*dst.File, fn *dst.FuncD
 					},
 					Elts: results,
 				},
+			}
+			if errResultVal != nil {
+				i.Results = append(i.Results, errResultVal)
 			}
 		}
 		return true

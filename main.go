@@ -228,7 +228,24 @@ func run(mode string, q *query) error {
 		if err != nil {
 			return err
 		}
+	case cmdIntroduceResultObject:
+		p, err := parseInputPositionString(q.Pos)
+		if err != nil {
+			return err
+		}
+		d, files, err := loadFiles(p)
+		if err != nil {
+			return err
+		}
 
+		funcDecl, err := getFuncAt(d, files[filepath.Clean(p.file)], p.pos)
+		if err != nil {
+			return err
+		}
+		updated, err = introduceResultObject(p, files, funcDecl)
+		if err != nil {
+			return err
+		}
 	case "no-op":
 		p, err := parseInputPositionString(q.Pos)
 		if err != nil {

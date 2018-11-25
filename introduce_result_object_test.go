@@ -21,6 +21,10 @@ func TestIntroduceResultObject(t *testing.T) {
 			filename: "result_obj_basic.go",
 			function: "introduceResultBasic",
 		},
+		{
+			filename: "result_obj_error.go",
+			function: "introduceResultWithError",
+		},
 	}
 
 	for _, testCase := range testCases {
