@@ -6,11 +6,11 @@ import (
 	"github.com/dave/dst"
 )
 
-const cmdIntroduceResultObject = "introduce-result-object"
+const cmdResultsToStruct = "results-to-struct"
 
 // consolidate results into a struct
 // exclude the last value if it's an error
-func introduceResultObject(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
+func regopherResultsToStruct(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
 	resultName := fn.Name.Name + "Result"
 	varName := "res"
 	results := dst.Clone(fn.Type.Results).(*dst.FieldList)

@@ -40,7 +40,7 @@ func TestIntroduceResultObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			p := inputPos{file: file}
-			_, err = introduceResultObject(p, map[string]*dst.File{p.file: f}, funcDecl)
+			_, err = regopherResultsToStruct(p, map[string]*dst.File{p.file: f}, funcDecl)
 			if err != nil {
 				t.Fatal(err)
 			}

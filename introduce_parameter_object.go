@@ -6,9 +6,9 @@ import (
 	"github.com/dave/dst"
 )
 
-const cmdIntroduceParameterObject = "introduce-parameter-object"
+const cmdParamsToStruct = "params-to-struct"
 
-func introduceParameterObject(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
+func regopherParamsToStruct(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
 	paramName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)
