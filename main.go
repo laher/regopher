@@ -187,7 +187,10 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 	if err != nil && af == nil {
 		return d, files, err
 	}
-	f := d.DecorateFile(af)
+	f, err := d.DecorateFile(af)
+	if err != nil {
+		return d, files, err
+	}
 	files[filepath.Clean(p.file)] = f
 	dir := filepath.Dir(p.file)
 	matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
@@ -200,7 +203,10 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 			if err != nil && af == nil {
 				return d, files, err
 			}
-			f := d.DecorateFile(af)
+			f, err := d.DecorateFile(af)
+			if err != nil {
+				return d, files, err
+			}
 			files[filepath.Clean(match)] = f
 		}
 	}
