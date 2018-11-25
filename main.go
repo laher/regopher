@@ -1,4 +1,4 @@
-package main
+package main // import "github.com/laher/regopher"
 
 import (
 	"bytes"
