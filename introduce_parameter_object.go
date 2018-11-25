@@ -6,9 +6,9 @@ import (
 	"github.com/dave/dst"
 )
 
-const introduceParameterObject = "introduce-parameter-object"
+const cmdIntroduceParameterObject = "introduce-parameter-object"
 
-func extractParameterObject(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
+func introduceParameterObject(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
 	paramName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)

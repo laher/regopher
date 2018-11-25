@@ -210,7 +210,7 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 func run(mode string, q *query) error {
 	updated := map[string]*dst.File{}
 	switch mode {
-	case introduceParameterObject:
+	case cmdIntroduceParameterObject:
 		p, err := parseInputPositionString(q.Pos)
 		if err != nil {
 			return err
@@ -224,7 +224,7 @@ func run(mode string, q *query) error {
 		if err != nil {
 			return err
 		}
-		updated, err = extractParameterObject(p, files, funcDecl)
+		updated, err = introduceParameterObject(p, files, funcDecl)
 		if err != nil {
 			return err
 		}

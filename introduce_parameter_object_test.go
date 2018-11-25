@@ -44,7 +44,7 @@ func TestExtractParameterObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			p := inputPos{file: file}
-			_, err = extractParameterObject(p, map[string]*dst.File{p.file: f}, funcDecl)
+			_, err = introduceParameterObject(p, map[string]*dst.File{p.file: f}, funcDecl)
 			if err != nil {
 				t.Fatal(err)
 			}
