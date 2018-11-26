@@ -14,33 +14,38 @@ import (
 
 func TestIntroduceResultObject(t *testing.T) {
 	testCases := []struct {
-		filename string
-		function string
+		pos string
 	}{
 		{
-			filename: "result_obj_basic.go",
-			function: "introduceResultBasic",
+			pos: "result_obj_basic.go:#28",
 		},
 		{
-			filename: "result_obj_error.go",
-			function: "introduceResultWithError",
+			pos: "result_obj_error.go:#45",
 		},
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.filename, func(t *testing.T) {
+		t.Run(testCase.pos, func(t *testing.T) {
 			fset := token.NewFileSet()
-			file := "testdata/before/" + testCase.filename
-			f, err := decorator.ParseFile(fset, file, nil, parser.AllErrors|parser.ParseComments)
+			pos, err := parseInputPositionString(testCase.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
-			funcDecl, err := getFuncByName(f, testCase.function)
+			file := "testdata/before/" + pos.file
+			af, err := parser.ParseFile(fset, file, nil, parser.AllErrors|parser.ParseComments)
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := inputPos{file: file}
-			_, err = regopherResultsToStruct(p, map[string]*dst.File{p.file: f}, funcDecl)
+			d := decorator.New(fset)
+			f, err := d.DecorateFile(af)
+			if err != nil {
+				t.Fatal(err)
+			}
+			funcDecl, err := getFuncAt(d, f, pos.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = regopherResultsToStruct(pos, map[string]*dst.File{pos.file: f}, funcDecl)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -49,7 +54,7 @@ func TestIntroduceResultObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			actual := string(w.Bytes())
-			expected, err := ioutil.ReadFile("testdata/expected/" + testCase.filename)
+			expected, err := ioutil.ReadFile("testdata/expected/" + pos.file)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -59,7 +64,6 @@ func TestIntroduceResultObject(t *testing.T) {
 				diffs := dmp.DiffMain(string(expected), actual, false)
 
 				t.Error(dmp.DiffPrettyText(diffs))
-				t.Error("actual: \n" + actual)
 			}
 		})
 	}

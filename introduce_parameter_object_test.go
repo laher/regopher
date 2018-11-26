@@ -14,42 +14,44 @@ import (
 
 func TestExtractParameterObject(t *testing.T) {
 	testCases := []struct {
-		pos      string
-		filename string
-		function string
+		pos string
 	}{
 		{
-			filename: "parameter_obj_basic.go",
-			function: "extractParamUnused",
+			pos: "parameter_obj_basic.go:#42",
 		},
 		{
-			filename: "parameter_obj_used.go",
-			function: "extractParamUsed",
+			pos: "parameter_obj_used.go:#35",
 		},
 		{
-			filename: "parameter_obj_referenced.go",
-			function: "extractParamReferenced",
+			pos: "parameter_obj_referenced.go:#35",
 		},
 		{
-			filename: "parameter_obj_method.go",
-			function: "extractParam",
+			pos: "parameter_obj_method.go:#70",
 		},
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.filename, func(t *testing.T) {
+		t.Run(testCase.pos, func(t *testing.T) {
 			fset := token.NewFileSet()
-			file := "testdata/before/" + testCase.filename
-			f, err := decorator.ParseFile(fset, file, nil, parser.AllErrors|parser.ParseComments)
+			pos, err := parseInputPositionString(testCase.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
-			funcDecl, err := getFuncByName(f, testCase.function)
+			file := "testdata/before/" + pos.file
+			af, err := parser.ParseFile(fset, file, nil, parser.AllErrors|parser.ParseComments)
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := inputPos{file: file}
-			_, err = regopherParamsToStruct(p, map[string]*dst.File{p.file: f}, funcDecl)
+			d := decorator.New(fset)
+			f, err := d.DecorateFile(af)
+			if err != nil {
+				t.Fatal(err)
+			}
+			funcDecl, err := getFuncAt(d, f, pos.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = regopherParamsToStruct(pos, map[string]*dst.File{pos.file: f}, funcDecl)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -58,7 +60,7 @@ func TestExtractParameterObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			actual := string(w.Bytes())
-			expected, err := ioutil.ReadFile("testdata/expected/" + testCase.filename)
+			expected, err := ioutil.ReadFile("testdata/expected/" + pos.file)
 			if err != nil {
 				t.Fatal(err)
 			}
