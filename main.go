@@ -185,6 +185,9 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	for i, f := range matches {
+		matches[i] = filepath.Join(dir, f)
+	}
 	return loadNamedFiles(p, matches)
 }
 
@@ -201,8 +204,8 @@ func loadNamedFiles(p inputPos, filenames []string) (*decorator.Decorator, map[s
 		if err != nil {
 			return d, files, err
 		}
-		fmt.Println(match)
-		files[filepath.Clean(match)] = f
+		//fmt.Println(match)
+		files[match] = f
 	}
 	return d, files, nil
 }
@@ -220,7 +223,7 @@ func run(mode string, q *query) error {
 			return err
 		}
 
-		funcDecl, err := getFuncAt(d, files[filepath.Clean(p.file)], p.pos)
+		funcDecl, err := getFuncAt(d, files[p.file], p.pos)
 		if err != nil {
 			return err
 		}
@@ -238,7 +241,7 @@ func run(mode string, q *query) error {
 			return err
 		}
 
-		funcDecl, err := getFuncAt(d, files[filepath.Clean(p.file)], p.pos)
+		funcDecl, err := getFuncAt(d, files[p.file], p.pos)
 		if err != nil {
 			return err
 		}

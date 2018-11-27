@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/dave/dst"
 )
@@ -13,8 +12,7 @@ func regopherParamsToStruct(p inputPos, files map[string]*dst.File, fn *dst.Func
 	paramName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)
-	fmt.Println(p.file)
-	f := files[filepath.Clean(p.file)]
+	f := files[p.file]
 
 	fn.Type.Params.List = []*dst.Field{
 		structAsField(varName, paramName),
