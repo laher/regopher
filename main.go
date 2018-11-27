@@ -174,6 +174,7 @@ func main() {
 		Build: ctxt,
 		Scope: scope,
 	}
+	fmt.Println(posn)
 	if err := run(mode, &q); err != nil {
 		log.Fatal(err)
 	}
@@ -188,7 +189,7 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 	}
 	for _, f := range matches {
 		if f != p.file {
-			filenames = append(filenames, filepath.Join(dir, f))
+			filenames = append(filenames, f)
 		}
 	}
 	return loadNamedFiles(p, filenames)
@@ -267,10 +268,11 @@ func run(mode string, q *query) error {
 
 	if *writeFlag {
 		for name, f := range updated {
-			w, err := os.OpenFile(name, os.O_RDWR|os.O_TRUNC, 0666)
+			w, err := os.OpenFile(name, os.O_RDWR, 0666)
 			if err != nil {
 				return err
 			}
+			defer w.Close()
 
 			if err := decorator.Fprint(w, f); err != nil {
 				return err
@@ -287,10 +289,10 @@ func run(mode string, q *query) error {
 			// contents
 			// newline
 			w := &bytes.Buffer{}
-			fmt.Fprintln(os.Stdout, name)
 			if err := decorator.Fprint(w, f); err != nil {
 				return err
 			}
+			fmt.Fprintln(os.Stdout, name)
 			fmt.Fprintf(os.Stdout, "%d\n", w.Len())
 			fmt.Fprintln(os.Stdout, w.String())
 		}
