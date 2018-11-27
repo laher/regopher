@@ -50,8 +50,8 @@ func getFuncAt(d *decorator.Decorator, f *dst.File, pos int) (*dst.FuncDecl, err
 		p := an.Pos()
 		e := an.End()
 		if pos > int(p) && pos < int(e) {
+			fmt.Printf("%T [%d,%d]: %+v\n", n, p, e, n)
 			if i, ok := n.(*dst.FuncDecl); ok {
-				// fmt.Printf("%T [%d,%d]: %+v\n", n, p, e, n)
 				r = i
 			}
 			// ok

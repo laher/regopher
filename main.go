@@ -180,15 +180,18 @@ func main() {
 }
 
 func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
+	filenames := []string{p.file}
 	dir := filepath.Dir(p.file)
 	matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
 	if err != nil {
 		return nil, nil, err
 	}
-	for i, f := range matches {
-		matches[i] = filepath.Join(dir, f)
+	for _, f := range matches {
+		if f != p.file {
+			filenames = append(filenames, filepath.Join(dir, f))
+		}
 	}
-	return loadNamedFiles(p, matches)
+	return loadNamedFiles(p, filenames)
 }
 
 func loadNamedFiles(p inputPos, filenames []string) (*decorator.Decorator, map[string]*dst.File, error) {
@@ -197,7 +200,7 @@ func loadNamedFiles(p inputPos, filenames []string) (*decorator.Decorator, map[s
 	d := decorator.New(fset)
 	for _, match := range filenames {
 		af, err := parser.ParseFile(fset, match, nil, parser.AllErrors|parser.ParseComments)
-		if err != nil && af == nil {
+		if err != nil || af == nil {
 			return d, files, err
 		}
 		f, err := d.DecorateFile(af)
