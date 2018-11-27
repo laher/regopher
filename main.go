@@ -180,35 +180,29 @@ func main() {
 }
 
 func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
-	fset := token.NewFileSet()
-	files := map[string]*dst.File{}
-	d := decorator.New(fset)
-	af, err := parser.ParseFile(fset, p.file, nil, parser.AllErrors|parser.ParseComments)
-	if err != nil && af == nil {
-		return d, files, err
-	}
-	f, err := d.DecorateFile(af)
-	if err != nil {
-		return d, files, err
-	}
-	files[filepath.Clean(p.file)] = f
 	dir := filepath.Dir(p.file)
 	matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
 	if err != nil {
-		return d, files, err
+		return nil, nil, err
 	}
-	for _, match := range matches {
-		if match != p.file {
-			af, err := parser.ParseFile(fset, match, nil, parser.AllErrors|parser.ParseComments)
-			if err != nil && af == nil {
-				return d, files, err
-			}
-			f, err := d.DecorateFile(af)
-			if err != nil {
-				return d, files, err
-			}
-			files[filepath.Clean(match)] = f
+	return loadNamedFiles(p, matches)
+}
+
+func loadNamedFiles(p inputPos, filenames []string) (*decorator.Decorator, map[string]*dst.File, error) {
+	fset := token.NewFileSet()
+	files := map[string]*dst.File{}
+	d := decorator.New(fset)
+	for _, match := range filenames {
+		af, err := parser.ParseFile(fset, match, nil, parser.AllErrors|parser.ParseComments)
+		if err != nil && af == nil {
+			return d, files, err
 		}
+		f, err := d.DecorateFile(af)
+		if err != nil {
+			return d, files, err
+		}
+		fmt.Println(match)
+		files[filepath.Clean(match)] = f
 	}
 	return d, files, nil
 }
