@@ -9,31 +9,47 @@ import (
 const cmdParamsToStruct = "params-to-struct"
 
 func regopherParamsToStruct(p inputPos, files map[string]*dst.File, fn *dst.FuncDecl) (map[string]*dst.File, error) {
-	paramName := fn.Name.Name + "Param"
+	structName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)
 	f := files[p.file]
 
 	fn.Type.Params.List = []*dst.Field{
-		structAsField(varName, paramName),
+		structAsField(varName, structName),
 	}
-	renames := map[string]string{}
+	type rename struct {
+		from  string
+		to    string
+		param *dst.Field
+	}
+	renames := map[string]rename{}
 	// rename all references to the parameter
 	for _, p := range params.List {
 		for _, n := range p.Names {
-			renames[n.Name] = fmt.Sprintf("%s.%s", varName, n.Name)
+			renames[n.Name] = rename{
+				from:  n.Name,
+				to:    fmt.Sprintf("%s.%s", varName, n.Name),
+				param: p,
+			}
 		}
 	}
 	dst.Inspect(fn.Body, func(n dst.Node) bool {
 		switch i := n.(type) {
 		case *dst.Ident:
 			if n, ok := renames[i.Name]; ok {
-				i.Name = n
+				//fmt.Printf("%+v: %+v\n", n.param.Type, i.Obj.Decl.(*dst.Field).Type)
+				pt, ok := n.param.Type.(*dst.Ident)
+				nodet, ok := i.Obj.Decl.(*dst.Field).Type.(*dst.Ident)
+				if ok {
+					if pt.String() == nodet.String() {
+						i.Name = n.to
+					}
+				}
 			}
 		}
 		return true
 	})
-	decl := newStruct(paramName, params)
+	decl := newStruct(structName, params)
 	f.Decls = append(f.Decls, decl)
 	updated := map[string]*dst.File{p.file: f}
 	for filename, f := range files {
@@ -49,7 +65,7 @@ func regopherParamsToStruct(p inputPos, files map[string]*dst.File, fn *dst.Func
 						c.Args = []dst.Expr{
 							&dst.CompositeLit{
 								Type: &dst.Ident{
-									Name: paramName,
+									Name: structName,
 								},
 								Elts: args,
 							},

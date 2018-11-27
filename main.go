@@ -174,7 +174,7 @@ func main() {
 		Build: ctxt,
 		Scope: scope,
 	}
-	fmt.Println(posn)
+	//fmt.Println(posn)
 	if err := run(mode, &q); err != nil {
 		log.Fatal(err)
 	}

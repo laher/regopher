@@ -17,20 +17,23 @@ func TestExtractParameterObject(t *testing.T) {
 		additionalFiles []string
 	}{
 		{
-			pos: "parameter_obj_basic.go:#42",
+			pos: "params_to_struct_basic.go:#42",
 		},
 		{
-			pos: "parameter_obj_used.go:#35",
+			pos: "params_to_struct_used.go:#35",
 		},
 		{
-			pos: "parameter_obj_referenced.go:#35",
+			pos: "params_to_struct_referenced.go:#35",
 		},
 		{
-			pos: "parameter_obj_method.go:#70",
+			pos: "params_to_struct_method.go:#70",
 		},
 		{
-			pos:             "parameter_obj_referenced_other_file.go:#35",
-			additionalFiles: []string{"parameter_obj_referenced_additional_file.go"},
+			pos: "params_to_struct_collision_by_type.go:#73",
+		},
+		{
+			pos:             "params_to_struct_referenced_other_file.go:#35",
+			additionalFiles: []string{"params_to_struct_referenced_additional_file.go"},
 		},
 	}
 
