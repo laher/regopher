@@ -7,18 +7,15 @@ import (
 )
 
 func regopherParamsToStruct(param regopherParamsToStructParam) (map[string]*dst.File, error) {
-	paramName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)
-	f := files[param.p.file]
-
 	fn.Type.Params.List = []*dst.Field{
 		//structAsField(varName, paramName),
 	}
 	renames := map[string]string{}
 	// rename all references to the parameter
-	for _, pa := range params.List {
-		for _, n := range pa.Names {
+	for _, p := range params.List {
+		for _, n := range p.Names {
 			renames[n.Name] = fmt.Sprintf("%s.%s", varName, n.Name)
 		}
 	}

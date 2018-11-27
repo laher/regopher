@@ -39,10 +39,13 @@ func regopherParamsToStruct(p inputPos, files map[string]*dst.File, fn *dst.Func
 			if n, ok := renames[i.Name]; ok {
 				//fmt.Printf("%+v: %+v\n", n.param.Type, i.Obj.Decl.(*dst.Field).Type)
 				pt, ok := n.param.Type.(*dst.Ident)
-				nodet, ok := i.Obj.Decl.(*dst.Field).Type.(*dst.Ident)
+				f, ok := i.Obj.Decl.(*dst.Field)
 				if ok {
-					if pt.String() == nodet.String() {
-						i.Name = n.to
+					nodet, ok := f.Type.(*dst.Ident)
+					if ok {
+						if pt.String() == nodet.String() {
+							i.Name = n.to
+						}
 					}
 				}
 			}
