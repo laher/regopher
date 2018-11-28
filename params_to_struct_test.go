@@ -70,7 +70,7 @@ func TestExtractParameterObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			actual := string(w.Bytes())
-			expected, err := ioutil.ReadFile(strings.Replace(pos.file, "testdata/before", "testdata/expected", 1))
+			expected, err := ioutil.ReadFile(strings.Replace(pos.file, "testdata/before", "testdata/after", 1))
 			if err != nil {
 				t.Fatal(err)
 			}

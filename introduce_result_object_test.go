@@ -54,7 +54,7 @@ func TestIntroduceResultObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			actual := string(w.Bytes())
-			expected, err := ioutil.ReadFile("testdata/expected/" + pos.file)
+			expected, err := ioutil.ReadFile("testdata/after/" + pos.file)
 			if err != nil {
 				t.Fatal(err)
 			}
