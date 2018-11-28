@@ -198,7 +198,7 @@ func loadFiles(p inputPos) (*decorator.Decorator, map[string]*dst.File, error) {
 func loadNamedFiles(p inputPos, filenames []string) (*decorator.Decorator, map[string]*dst.File, error) {
 	fset := token.NewFileSet()
 	files := map[string]*dst.File{}
-	d := decorator.New(fset)
+	d := decorator.NewDecorator(fset)
 	for _, match := range filenames {
 		af, err := parser.ParseFile(fset, match, nil, parser.AllErrors|parser.ParseComments)
 		if err != nil || af == nil {

@@ -36,7 +36,7 @@ func TestIntroduceResultObject(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			d := decorator.New(fset)
+			d := decorator.NewDecorator(fset)
 			f, err := d.DecorateFile(af)
 			if err != nil {
 				t.Fatal(err)
