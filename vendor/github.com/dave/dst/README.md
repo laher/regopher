@@ -5,7 +5,7 @@
 The `dst` package enables manipulation of a Go syntax tree with high fidelity. Decorations (e.g. 
 comments and line spacing) remain attached to the correct nodes as the tree is modified.
 
-### Where does `go/ast` break?
+## Where does `go/ast` break?
 
 The `go/ast` package wasn't created with source manipulation as an intended use-case. Comments are 
 stored by their byte offset instead of attached to nodes, so re-arranging nodes breaks the output. 
@@ -77,7 +77,7 @@ if err := decorator.Print(f); err != nil {
 //}
 ```
 
-### Usage
+## Usage
 
 Parsing a source file to `dst` and printing the results after modification can be accomplished with 
 several `Parse` and `Print` convenience functions in the [decorator](https://godoc.org/github.com/dave/dst/decorator) 
@@ -87,7 +87,7 @@ For more fine-grained control you can use [Decorator](https://godoc.org/github.c
 to convert from `ast` to `dst`, and [Restorer](https://godoc.org/github.com/dave/dst/decorator#Restorer) 
 to convert back again. 
 
-#### Comments
+### Comments
 
 Comments are added at decoration attachment points. [See here](https://github.com/dave/dst/blob/master/decorations-types-generated.go) 
 for a full list of these points, along with demonstration code of where they are rendered in the 
@@ -127,7 +127,7 @@ if err := decorator.Print(f); err != nil {
 //}
 ```
 
-#### Line spacing
+### Spacing
 
 The `Before` property marks the node as having a line space (new line or empty line) before the node. 
 These spaces are rendered before any decorations attached to the `Start` decoration point. The `After`
@@ -173,7 +173,7 @@ if err := decorator.Print(f); err != nil {
 //}
 ```
 
-#### Common properties
+### Decorations
 
 The common decoration properties (`Start`, `End`, `Before` and `After`) occur on all nodes, and can be 
 accessed with the `Decorations()` method on the `Node` interface:
@@ -215,12 +215,12 @@ if err := decorator.Print(f); err != nil {
 //}
 ```
 
-#### Newlines as decorations
+### Newlines
 
 The `Before` and `After` properties cover the majority of cases, but occasionally a newline needs to 
 be rendered inside a node. Simply add a `\n` decoration to accomplish this. 
 
-#### Clone
+### Clone
 
 Re-using an existing node elsewhere in the tree will panic when the tree is restored to `ast`. Instead,
 use the `Clone` function to make a deep copy of the node before re-use:
@@ -254,33 +254,48 @@ if err := decorator.Print(f); err != nil {
 //var j /* b */ int
 ```
 
-#### Apply function from astutil
+### Apply
 
 The [dstutil](https://github.com/dave/dst/tree/master/dstutil) package is a fork of `golang.org/x/tools/go/ast/astutil`, 
 and provides the `Apply` function with similar semantics.     
 
-#### Imports
+### Imports
 
 The decorator can automatically manage the `import` block, which is a non-trivial task.
 
-Use [NewWithImports](https://godoc.org/github.com/dave/dst/decorator#NewWithImports) and 
-[NewRestorerWithImports](https://godoc.org/github.com/dave/dst/decorator#NewRestorerWithImports) to 
-create an import aware decorator / restorer with recommended settings.
+Use [NewDecoratorWithImports](https://godoc.org/github.com/dave/dst/decorator#NewDecoratorWithImports) 
+and [NewRestorerWithImports](https://godoc.org/github.com/dave/dst/decorator#NewRestorerWithImports) 
+to create an import aware decorator / restorer. 
 
-When adding a qualified identifier node, there is no need to use `SelectorExpr` - just add an 
-`Ident` and set the [Path](https://godoc.org/github.com/dave/dst#Ident) property to the imported 
-package path. The restorer will wrap it in a `SelectorExpr` where appropriate when converting back 
-to ast, and also update the import block.
+During decoration, remote identifiers are normalised - `*ast.SelectorExpr` nodes that represent 
+qualified identifiers are replaced with `*dst.Ident` nodes with the `Path` field set to the path of 
+the imported package. 
+
+When adding a qualified identifier node, there is no need to use `*dst.SelectorExpr` - just add a 
+`*dst.Ident` and set `Path` to the imported package path. The restorer will wrap it in a 
+`*ast.SelectorExpr` where appropriate when converting back to ast, and also update the import 
+block.
+
+To enable import management, the decorator must be able to resolve the imported package for 
+selector expressions and identifiers, and the restorer must be able to resolve the name of a 
+package given it's path. Several implementations for these resolvers are provided, and the best 
+method will depend on the environment. [See below](#resolvers) for more details.
+
+### Load
 
 The [Load](https://godoc.org/github.com/dave/dst/decorator#Load) convenience function uses 
-`go/packages` to load packages and decorate all loaded ast files:
+`go/packages` to load packages and decorate all loaded ast files, with import management enabled:
 
 ```go
 // Create a simple module in a temporary directory
-dir, _ := ioutil.TempDir("", "")
+dir, err := createTempFiles(map[string]string{
+	"go.mod":	"module root",
+	"main.go":	"package main \n\n func main() {}",
+})
 defer os.RemoveAll(dir)
-ioutil.WriteFile(filepath.Join(dir, "go.mod"), []byte("module root"), 0666)
-ioutil.WriteFile(filepath.Join(dir, "main.go"), []byte("package main \n\n func main() {}"), 0666)
+if err != nil {
+	panic(err)
+}
 
 // Use the Load convenience function that calls go/packages to load the package. All loaded
 // ast files are decorated to dst.
@@ -308,7 +323,7 @@ b.List = append(b.List, &dst.ExprStmt{
 
 // Create a restorer with the import manager enabled, and print the result. As you can see, the
 // import block is automatically managed, and the Println ident is converted to a SelectorExpr:
-r := decorator.NewRestorerWithImports("root", dir)
+r := decorator.NewRestorerWithImports("root", gopackages.New(dir))
 if err := r.Print(p.Files[0]); err != nil {
 	panic(err)
 }
@@ -321,56 +336,7 @@ if err := r.Print(p.Files[0]); err != nil {
 //func main() { fmt.Println("Hello, World!") }
 ```
 
-The default resolvers that enable import management may not be suitable for all environments. If 
-more control is needed, custom resolvers can be used for both the `Decorator` and `Restorer`. More 
-details and several alternative implementations can be found [here](https://github.com/dave/dst/tree/master/decorator/resolver).
-
-Here's an example of manually supplying alternative resolvers for the decorator and resolver:
-
-```go
-code := `package main
-
-	import "fmt"
-
-	func main() {
-		fmt.Println("a")
-	}`
-
-dec := decorator.New(token.NewFileSet())
-dec.Resolver = &goast.IdentResolver{PackageResolver: &guess.PackageResolver{}}
-
-f, err := dec.Parse(code)
-if err != nil {
-	panic(err)
-}
-
-f.Decls[1].(*dst.FuncDecl).Body.List[0].(*dst.ExprStmt).X.(*dst.CallExpr).Args = []dst.Expr{
-	&dst.CallExpr{
-		Fun: &dst.Ident{Name: "A", Path: "foo.bar/baz"},
-	},
-}
-
-res := decorator.NewRestorer()
-res.Resolver = &guess.PackageResolver{}
-if err := res.Print(f); err != nil {
-	panic(err)
-}
-
-//Output:
-//package main
-//
-//import (
-//	"fmt"
-//
-//	"foo.bar/baz"
-//)
-//
-//func main() {
-//	fmt.Println(baz.A())
-//}
-```
-
-#### Mappings between ast and dst nodes
+### Mappings
 
 The decorator exposes `Dst.Nodes` and `Ast.Nodes` which map between `ast.Node` and `dst.Node`. This 
 enables systems that refer to `ast` nodes (such as `go/types`) to be used:
@@ -402,7 +368,7 @@ if _, err := conf.Check("", fset, []*ast.File{astFile}, &typesInfo); err != nil 
 }
 
 // Create a new decorator, which will track the mapping between ast and dst nodes
-dec := decorator.New(fset)
+dec := decorator.NewDecorator(fset)
 
 // Decorate the *ast.File to give us a *dst.File
 f, err := dec.DecorateFile(astFile)
@@ -455,12 +421,183 @@ if err := decorator.Print(f); err != nil {
 //}
 ```
 
-### Status
+## Resolvers
+
+There are two separate interfaces defined by the [resolver package](https://github.com/dave/dst/tree/master/decorator/resolver) 
+which allow the decorator and restorer to automatically manage the imports block.
+
+The decorator uses a `DecoratorResolver` which resolves the package path of any `*ast.Ident`. This is 
+complicated by dot-import syntax ([see below](#dot-imports)).
+
+The restorer uses a `RestorerResolver` which resolves the name of any package given the path. This 
+is complicated by vendoring and Go modules.
+
+When `Resolver` is set on `Decorator` or `Restorer`, the `Path` property must be set to the local 
+package path.
+
+Several implementations of both interfaces that are suitable for different environments are 
+provided:
+
+### DecoratorResolver
+
+#### gotypes
+
+The [gotypes](https://github.com/dave/dst/blob/master/decorator/resolver/gotypes/resolver.go) 
+package provides a `DecoratorResolver` with full dot-import compatibility. However it requires full 
+export data for all imported packages, so the `Uses` map from `go/types.Info` is required. There 
+are several methods of generating `go/types.Info`. Using `golang.org/x/tools/go/packages.Load` is 
+recommended for full Go modules compatibility. See the [decorator.Load](https://godoc.org/github.com/dave/dst/decorator#Load)
+convenience function to automate this.
+
+#### goast
+
+The [goast](https://github.com/dave/dst/blob/master/decorator/resolver/goast/resolver.go) package 
+provides a simplified `DecoratorResolver` that only needs to scan a single ast file. This is unable 
+to resolve identifiers from dot-imported packages, so will panic if a dot-import is encountered in 
+the import block. It uses the provided `RestorerResolver` to resolve the names of all imported 
+packages. If no `RestorerResolver` is provided, the [guess](#guess-and-simple) implementation is used. 
+
+### RestorerResolver
+
+#### gopackages
+
+The [gopackages](https://github.com/dave/dst/blob/master/decorator/resolver/gopackages/resolver.go) 
+package provides a `RestorerResolver` with full compatibility with Go modules. It uses 
+`golang.org/x/tools/go/packages` to load the package data. This may be very slow, and uses the `go` 
+command line tool to query package data, so may not be compatible with some environments. 
+
+#### gobuild
+
+The [gobuild](https://github.com/dave/dst/blob/master/decorator/resolver/gobuild/resolver.go) 
+package provides an alternative `RestorerResolver` that uses the legacy `go/build` system to load 
+the imported package data. This may be needed in some circumstances and provides better performance 
+than `go/packages`. However, this is not Go modules aware.
+
+#### guess and simple
+
+The [guess](https://github.com/dave/dst/blob/master/decorator/resolver/guess/resolver.go) and 
+[simple](https://github.com/dave/dst/blob/master/decorator/resolver/simple/resolver.go) packages
+provide simple `RestorerResolver` implementations that may be useful in certain circumstances, or 
+where performance is critical. `simple` resolves paths only if they occur in a provided map. 
+`guess` guesses the package name based on the last part of the path.
+
+### Example
+
+Here's an example of supplying resolvers for the decorator and resolver:
+
+```go
+code := `package main
+
+	import "fmt"
+
+	func main() {
+		fmt.Println("a")
+	}`
+
+dec := decorator.NewDecoratorWithImports(token.NewFileSet(), "main", goast.New())
+
+f, err := dec.Parse(code)
+if err != nil {
+	panic(err)
+}
+
+f.Decls[1].(*dst.FuncDecl).Body.List[0].(*dst.ExprStmt).X.(*dst.CallExpr).Args = []dst.Expr{
+	&dst.CallExpr{
+		Fun: &dst.Ident{Name: "A", Path: "foo.bar/baz"},
+	},
+}
+
+res := decorator.NewRestorerWithImports("main", guess.New())
+if err := res.Print(f); err != nil {
+	panic(err)
+}
+
+//Output:
+//package main
+//
+//import (
+//	"fmt"
+//
+//	"foo.bar/baz"
+//)
+//
+//func main() {
+//	fmt.Println(baz.A())
+//}
+```
+
+### Alias
+
+To control the alias of imports, use a `FileRestorer`:
+
+```go
+code := `package main
+
+	import "fmt"
+
+	func main() {
+		fmt.Println("a")
+	}`
+
+dec := decorator.NewDecoratorWithImports(token.NewFileSet(), "main", goast.New())
+
+f, err := dec.Parse(code)
+if err != nil {
+	panic(err)
+}
+
+res := decorator.NewRestorerWithImports("main", guess.New())
+
+fr := res.FileRestorer()
+fr.Alias["fmt"] = "fmt1"
+
+if err := fr.Print(f); err != nil {
+	panic(err)
+}
+
+//Output:
+//package main
+//
+//import fmt1 "fmt"
+//
+//func main() {
+//	fmt1.Println("a")
+//}
+``` 
+
+### Details
+
+For more information on exactly how the imports block is managed, read through the [test 
+cases](https://github.com/dave/dst/blob/master/decorator/restorer_resolver_test.go).
+
+### Dot-imports
+
+Consider this file...
+
+```go
+package main
+
+import (
+	. "a"
+)
+
+func main() {
+	B()
+	C()
+}
+```
+
+`B` and `C` could be local identifiers from a different file in this package,
+or from the imported package `a`. If only one is from `a` and it is removed, we should remove the
+import when we restore to `ast`. Thus the resolver needs to be able to resolve the package using 
+the full info from `go/types`.
+
+## Status
 
 This is an experimental package under development, but the API is not expected to change much going 
 forward. Please try it out and give feedback. 
 
-### Chat?
+## Chat?
 
 Feel free to create an [issue](https://github.com/dave/dst/issues) or chat in the 
 [#dst](https://gophers.slack.com/messages/CCVL24MTQ) Gophers Slack channel.
