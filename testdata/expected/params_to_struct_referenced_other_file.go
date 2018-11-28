@@ -2,10 +2,10 @@ package main
 
 import "fmt"
 
-func extractParamReferenced(param extractParamReferencedParam) {
+func extractParamReferencedOtherFile(param extractParamReferencedOtherFileParam) {
 	fmt.Printf("regopher %s\n", param.a)
 }
 
-type extractParamReferencedParam struct {
+type extractParamReferencedOtherFileParam struct {
 	a, b, c string
 }

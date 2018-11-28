@@ -1,5 +1,5 @@
 package main
 
-func referToParam() {
+func referToParamAdditionalFile() {
 	extractParamReferenced("1", "2", "3")
 }
