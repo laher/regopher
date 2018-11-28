@@ -32,6 +32,9 @@ func TestExtractParameterObject(t *testing.T) {
 			pos: "params_to_struct_collision_by_type.go:#73",
 		},
 		{
+			pos: "params_to_struct_collision_same_type.go:#73",
+		},
+		{
 			pos:             "params_to_struct_referenced_other_file.go:#35",
 			additionalFiles: []string{"params_to_struct_referenced_additional_file.go"},
 		},
