@@ -17,10 +17,10 @@ func TestIntroduceResultObject(t *testing.T) {
 		pos string
 	}{
 		{
-			pos: "result_obj_basic.go:#28",
+			pos: "results_to_struct_basic.go:#28",
 		},
 		{
-			pos: "result_obj_error.go:#45",
+			pos: "results_to_struct_error.go:#45",
 		},
 	}
 
