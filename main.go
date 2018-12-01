@@ -15,6 +15,7 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
+	"golang.org/x/tools/cmd/guru/serial"
 )
 
 // flags
@@ -126,6 +127,8 @@ type query struct {
 
 	// result-printing function, safe for concurrent use
 	//Output func(*token.FileSet, QueryResult)
+	gi *serial.ReferrersInitial
+	gp []*serial.ReferrersPackage
 }
 
 func printHelp() {
@@ -174,7 +177,19 @@ func main() {
 		Build: ctxt,
 		Scope: scope,
 	}
-	//fmt.Println(posn)
+	switch mode {
+	case "params-to-struct":
+		gi, gp, err := runGuruReferrers(posn)
+		if err != nil {
+			log.Fatal(err)
+		}
+		q.gi = gi
+		q.gp = gp
+		log.Printf("Referree: %+v", q.gi)
+		for _, p := range q.gp {
+			log.Printf("Referring pkg: %+v", p)
+		}
+	}
 	if err := run(mode, &q); err != nil {
 		log.Fatal(err)
 	}

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -25,6 +27,39 @@ import (
         ]
 }
 */
+
+func runGuruReferrers(pos string) (*serial.ReferrersInitial, []*serial.ReferrersPackage, error) {
+	reader, wait, err := invokeGuru("referrers", pos, "-json")
+	if err != nil {
+		return nil, nil, err
+	}
+	defer wait()
+	ri, rp, err := parseGuruReferrers(reader)
+	return ri, rp, err
+}
+
+type wait func() error
+
+func invokeGuru(subcommand string, pos string, flags ...string) (io.Reader, wait, error) {
+	exe := "guru"
+	p, err := exec.LookPath(exe)
+	if err != nil {
+		log.Printf("Couldn't find exe %s - %s", p, err)
+		return nil, nil, err
+	}
+	cmd := exec.Command(exe)
+
+	cmd.Args = append(cmd.Args, flags...)
+	cmd.Args = append(cmd.Args, []string{subcommand, pos}...)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Printf("Couldn't attach to stdout: %s", err)
+		return stdout, nil, err
+	}
+	err = cmd.Start()
+	//log.Printf("args: %v", cmd.Args)
+	return stdout, cmd.Wait, err
+}
 
 type guruPos struct {
 	file string
