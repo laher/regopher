@@ -12,6 +12,10 @@ func regopherParamsToStruct(p inputPos, files map[string]*dst.File, fn *dst.Func
 	structName := fn.Name.Name + "Param"
 	varName := "param"
 	params := dst.Clone(fn.Type.Params).(*dst.FieldList)
+	for _, param := range params.List {
+		param.Decs.Before = dst.NewLine
+		param.Decs.After = dst.NewLine
+	}
 	f := files[p.file]
 
 	fn.Type.Params.List = []*dst.Field{
